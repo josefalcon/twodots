@@ -7,8 +7,8 @@ var space = 25;
 
 var svg = d3.select('body')
   .append('svg')
-    .attr('width', '100%')
-    .attr('height', '100%')
+    .attr('width', width)
+    .attr('height', height)
   .append('g')
     .attr('transform', 'translate(' + space + ',' + space + ')');
 
