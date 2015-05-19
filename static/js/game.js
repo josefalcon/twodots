@@ -55,7 +55,7 @@ function draw(data) {
     .exit()
     .transition()
       .duration(350)
-      .style("fill-opacity", 1e-6)
+      .style('fill-opacity', 1e-6)
     .remove();
 }
 
@@ -81,26 +81,31 @@ function removeLine() {
   lineGroup.select('path').remove();
 }
 
+function animateHalo(el) {
+  el.setAttribute('data-animating', true);
+  haloGroup.append('circle')
+    .attr({
+      r: dotSize,
+      cx: el.dataset.col * space,
+      cy: el.dataset.row * space,
+      fill: el.dataset.color
+    })
+    .style('opacity', .4)
+    .transition()
+      .duration(800)
+      .ease('easeOutCirc')
+      .attr('r', dotSize * 3)
+      .style('opacity', 0)
+      .each('end', function() {
+        el.removeAttribute('data-animating');
+      })
+    .remove();
+}
+
 document.addEventListener('mouseover', function(e) {
   var t = e.target;
-  if (t.matches('.dot') && !t.dataset.animating) {
-    t.setAttribute('data-animating', true);
-    haloGroup.append('circle')
-      .attr({
-        r: dotSize,
-        cx: t.dataset.col * space,
-        cy: t.dataset.row * space,
-        fill: t.dataset.color
-      })
-      .style('opacity', .4)
-      .transition()
-        .duration(1000)
-        .attr('r', 24)
-        .style('opacity', 0)
-        .each('end', function() {
-          t.removeAttribute('data-animating');
-        })
-      .remove();
+  if (!drawing && t.matches('.dot') && !t.dataset.animating) {
+    animateHalo(t);
   }
 
   if (drawing && t.matches('circle')) {
@@ -109,6 +114,8 @@ document.addEventListener('mouseover', function(e) {
 
     if (!connects(current, dot)) return;
 
+    // animate after we know this is a valid connection
+    animateHalo(t);
     if (pathDots.length > 1) {
       var previous = pathDots[pathDots.length - 2];
       if (dot === previous) {
