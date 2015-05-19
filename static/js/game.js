@@ -4,6 +4,7 @@ var d3 = require('d3');
 var width = 400;
 var height = 400;
 var space = 30;
+var dotSize = 8;
 
 var svg = d3.select('body')
   .append('svg')
@@ -14,8 +15,17 @@ var svg = d3.select('body')
   .append('g')
     .attr('transform', 'translate(' + space + ',' + space + ')');
 
+var haloGroup = svg.append('g')
+  .attr('class', 'halo-group');
+
+var lineGroup = svg.append('g')
+  .attr('class', 'line-group');
+
+var dotGroup = svg.append('g')
+  .attr('class', 'dot-group');
+
 function draw(data) {
-  var dots = svg.selectAll('circle')
+  var dots = dotGroup.selectAll('circle')
     .data(data, function(d) { return d.id });
 
   dots
@@ -34,7 +44,7 @@ function draw(data) {
         'data-col': function(d) { return d.col },
         'data-row': function(d) { return d.row },
         'data-color': function(d) { return d.color },
-        r: 8,
+        r: dotSize,
         fill: function(d) { return d.color }
       })
     .transition()
@@ -62,19 +72,43 @@ var drawing = false;
 var pathDots = [];
 
 function drawLine() {
-  svg.select('path').attr('d', function(d) { return line(d); });
+  lineGroup.select('path').attr('d', function(d) { return line(d); });
 }
 
 function removeLine() {
   drawing = false;
   pathDots = [];
-  svg.select('path').remove();
+  lineGroup.select('path').remove();
 }
 
 document.addEventListener('mouseover', function(e) {
-  if (drawing && e.target.matches('circle')) {
-    var dot = e.target.dataset;
+  var t = e.target;
+  if (t.matches('.dot') && !t.dataset.animating) {
+    t.setAttribute('data-animating', true);
+    haloGroup.append('circle')
+      .attr({
+        r: dotSize,
+        cx: t.dataset.col * space,
+        cy: t.dataset.row * space,
+        fill: t.dataset.color
+      })
+      .style('opacity', .4)
+      .transition()
+        .duration(1000)
+        .attr('r', 24)
+        .style('opacity', 0)
+        .each('end', function() {
+          t.removeAttribute('data-animating');
+        })
+      .remove();
+  }
+
+  if (drawing && t.matches('circle')) {
+    var dot = t.dataset;
     var current = pathDots[pathDots.length - 1];
+
+    if (!connects(current, dot)) return;
+
     if (pathDots.length > 1) {
       var previous = pathDots[pathDots.length - 2];
       if (dot === previous) {
@@ -83,8 +117,6 @@ document.addEventListener('mouseover', function(e) {
         return;
       }
     }
-
-    if (!connects(current, dot)) return;
 
     if (pathDots.indexOf(dot) > -1) {
       b.remove(b.findAll(dot.color));
@@ -103,7 +135,7 @@ document.addEventListener('mousedown', function(e) {
   drawing = true;
   pathDots = [e.target.dataset];
 
-  svg.append('path')
+  lineGroup.append('path')
     .data([pathDots])
     .attr('class', 'line')
     .attr('d', line)
@@ -126,7 +158,7 @@ d3.select('svg').on('mousemove', function() {
   pt[0] -= space;
   pt[1] -= space;
 
-  var path = svg.select('path');
+  var path = lineGroup.select('path');
   path.attr('d', function(d) { return line(d) + 'L' + pt[0] + ',' + pt[1] });
 });
 
