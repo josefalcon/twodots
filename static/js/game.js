@@ -3,12 +3,14 @@ var d3 = require('d3');
 
 var width = 400;
 var height = 400;
-var space = 25;
+var space = 30;
 
 var svg = d3.select('body')
   .append('svg')
-    .attr('width', width)
-    .attr('height', height)
+    .attr({
+      'width': width,
+      'height': height
+    })
   .append('g')
     .attr('transform', 'translate(' + space + ',' + space + ')');
 
@@ -25,18 +27,18 @@ function draw(data) {
   dots
     .enter()
     .append('circle')
-      .attr('class', 'dot')
-      .attr('cx', function(d) { return d.col * space })
-      .attr('cy', -space)
-      .attr('data-col', function(d) { return d.col })
-      .attr('data-row', function(d) { return d.row })
-      .attr('data-color', function(d) { return d.color })
-      .attr('r', 8)
-      .attr('fill', function(d) { return d.color })
-      // .style('fill-opacity', 1e-6)
+      .attr({
+        class: 'dot',
+        cx: function(d) { return d.col * space },
+        cy: -space,
+        'data-col': function(d) { return d.col },
+        'data-row': function(d) { return d.row },
+        'data-color': function(d) { return d.color },
+        r: 8,
+        fill: function(d) { return d.color }
+      })
     .transition()
       .duration(650)
-      // .style('fill-opacity', 1)
       .attr('cy', function(d) { return d.row * space });
 
   dots
@@ -59,18 +61,25 @@ var line = d3.svg
 var drawing = false;
 var pathDots = [];
 
+function drawLine() {
+  svg.select('path').attr('d', function(d) { return line(d); });
+}
+
+function removeLine() {
+  drawing = false;
+  pathDots = [];
+  svg.select('path').remove();
+}
+
 document.addEventListener('mouseover', function(e) {
   if (drawing && e.target.matches('circle')) {
     var dot = e.target.dataset;
     var current = pathDots[pathDots.length - 1];
     if (pathDots.length > 1) {
       var previous = pathDots[pathDots.length - 2];
-      // TODO:
-      // if we do this we can't back track!
-      // if (dot === previous) return;
       if (dot === previous) {
         pathDots.pop();
-        svg.select('path').attr('d', function(d) { return line(d); });
+        drawLine();
         return;
       }
     }
@@ -78,18 +87,14 @@ document.addEventListener('mouseover', function(e) {
     if (!connects(current, dot)) return;
 
     if (pathDots.indexOf(dot) > -1) {
-      drawing = false;
-
       b.remove(b.findAll(dot.color));
       draw(b.data());
-      svg.select('path').remove();
-      pathDots = [];
+      removeLine();
       return;
     }
 
-    var path = svg.select('path');
     pathDots.push(dot);
-    path.attr('d', function(d) { return line(d); });
+    drawLine();
   }
 });
 
@@ -103,20 +108,19 @@ document.addEventListener('mousedown', function(e) {
     .attr('class', 'line')
     .attr('d', line)
     .style('stroke', e.target.dataset.color)
-    .style('stroke-width', 2);
+    .style('stroke-width', 4);
 });
 
-// TODO: should just use document here...
-d3.select('svg').on('mouseup', function() {
-  drawing = false;
+document.addEventListener('mouseup', function(e) {
   if (pathDots.length > 1) {
     b.remove(pathDots);
     draw(b.data());
   }
-  pathDots = [];
-  svg.select('path').remove();
-})
-.on('mousemove', function() {
+  removeLine();
+});
+
+// TODO: remove dependence on d3 here..
+d3.select('svg').on('mousemove', function() {
   if (!drawing) return;
   var pt = d3.mouse(this);
   pt[0] -= space;
