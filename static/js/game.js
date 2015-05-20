@@ -1,12 +1,16 @@
 var Board = require('./board');
 var d3 = require('d3');
 
-var width = 400;
-var height = 400;
-var space = 30;
-var dotSize = 8;
+var boardSize = 8;
+var dotSize = 13;
+var lineSize = dotSize / 2.5;
+var space = 4 * dotSize;
+
+var width = (boardSize + 1) * space;
+var height = (boardSize + 1) * space;
 
 var svg = d3.select('body')
+    .style('width', width + 'px')
   .append('svg')
     .attr({
       'width': width,
@@ -55,11 +59,11 @@ function draw(data) {
     .exit()
     .transition()
       .duration(350)
-      .style('fill-opacity', 1e-6)
+      .attr('r', 0)
     .remove();
 }
 
-var b = new Board(10, 10);
+var b = new Board(boardSize, boardSize);
 draw(b.data());
 
 var line = d3.svg
@@ -146,8 +150,11 @@ document.addEventListener('mousedown', function(e) {
     .data([pathDots])
     .attr('class', 'line')
     .attr('d', line)
-    .style('stroke', e.target.dataset.color)
-    .style('stroke-width', 4);
+    .style({
+      fill: 'none',
+      stroke: e.target.dataset.color,
+      'stroke-width': lineSize
+    });
 });
 
 document.addEventListener('mouseup', function(e) {
