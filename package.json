@@ -5,13 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "watchify static/js/game.js -o static/js/bundle.js"
+    "watch": "watchify static/js/game.js -o static/js/bundle.js",
+    "bundle": "browserify static/js/game.js | uglifyjs - -c -m -o static/js/bundle.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "browserify": "^10.2.0",
     "d3": "^3.5.5",
+    "uglify-js": "^2.4.23",
     "watchify": "^3.2.1"
   },
   "dependencies": {
